@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
+	"time"
 )
 
 type Actor struct {
@@ -26,13 +28,18 @@ type Movie struct {
 	Genres []string `json:"genres"`
 }
 
-func main() {
-	file, err := os.Open("actors.txt")
+type ActorScore struct {
+	Name  string
+	Score float32
+}
 
+func main() {
+	startTime := time.Now()
+
+	file, err := os.Open("actors.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
@@ -40,6 +47,8 @@ func main() {
 	var actorIDs []string
 	var idList []string
 	var movieIdList []string
+	actorScores := make(map[string]float32)
+	actorMovieCount := make(map[string]int)
 
 	for scanner.Scan() {
 		actorIDs = append(actorIDs, scanner.Text())
@@ -49,7 +58,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//tratamento dos IDs dos atores
+	// Tratamento dos IDs dos atores
 	for _, id := range actorIDs {
 		id = strings.ReplaceAll(id, `"`, "")
 		idList = append(idList, id)
@@ -57,7 +66,6 @@ func main() {
 
 	for _, id := range idList {
 		var totalScore float32 = 0
-		var totalVotes int = 0
 		response, err := http.Get(fmt.Sprintf("http://150.165.15.91:8001/actors/%s", id))
 		if err != nil {
 			fmt.Print(err.Error())
@@ -75,9 +83,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(string(responseData))
+		//fmt.Println(string(responseData))
 
-		//tratamento dos IDs dos filmes e calculo
+		// Tratamento dos IDs e cálculo do Score
 		for _, movieID := range actor.Movies {
 			movieID = strings.ReplaceAll(movieID, `"`, "")
 			movieIdList = append(movieIdList, movieID)
@@ -98,14 +106,39 @@ func main() {
 				log.Fatal(err)
 			}
 
-			fmt.Println(string(responseData))
+			//fmt.Println(string(responseData))
 			totalScore += movie.Score
-			totalVotes += movie.Votes
-
+			actorMovieCount[actor.Name]++
 		}
 
-		fmt.Println("Total Score: ", totalScore)
-		fmt.Println("Total Votes: ", totalVotes)
+		if actorMovieCount[actor.Name] > 0 {
+			actorScores[actor.Name] = totalScore / float32(actorMovieCount[actor.Name])
+		} else {
+			actorScores[actor.Name] = 0
+		}
+
+		//fmt.Println("Score: ", actorScores[actor.Name])
 	}
 
+	// Rank top10
+	sortedActors := make([]ActorScore, 0, len(actorScores))
+	for name, score := range actorScores {
+		sortedActors = append(sortedActors, ActorScore{Name: name, Score: score})
+	}
+
+	sort.Slice(sortedActors, func(i, j int) bool {
+		return sortedActors[i].Score > sortedActors[j].Score
+	})
+
+	fmt.Println("Top 10 Atores:")
+	for i, actorScore := range sortedActors[:10] {
+		fmt.Printf("%d. %s - Score: %.1f\n", i+1, actorScore.Name, actorScore.Score)
+	}
+
+	executionTime(startTime)
+}
+
+func executionTime(startTime time.Time) {
+	duration := time.Since(startTime)
+	fmt.Println("Tempo total de execução:", duration)
 }
