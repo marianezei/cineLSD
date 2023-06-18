@@ -17,8 +17,13 @@ type Actor struct {
 	Movies []string `json:"movies"`
 }
 
-type Movies struct {
-	MovieId []string `json:"movies"`
+type Movie struct {
+	ID     string   `json:"movie_id"`
+	Title  string   `json:"movie_title"`
+	Score  float32  `json:"averageRating"`
+	Votes  int      `json:"numberOfVotes"`
+	Year   string   `json:"year"`
+	Genres []string `json:"genres"`
 }
 
 func main() {
@@ -44,12 +49,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	//tratamento dos IDs dos atores
 	for _, id := range actorIDs {
 		id = strings.ReplaceAll(id, `"`, "")
 		idList = append(idList, id)
 	}
 
-	fmt.Println(idList)
+	var totalScore float32 = 0
+	var totalVotes int = 0
 
 	for _, id := range idList {
 		response, err := http.Get(fmt.Sprintf("http://150.165.15.91:8001/actors/%s", id))
@@ -64,33 +71,42 @@ func main() {
 		}
 		defer response.Body.Close()
 
-		fmt.Println(string(responseData))
-
 		var actor Actor
 		err = json.Unmarshal(responseData, &actor)
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println(string(responseData))
 
+		//tratamento dos IDs dos filmes e calculo
 		for _, movieID := range actor.Movies {
 			movieID = strings.ReplaceAll(movieID, `"`, "")
 			movieIdList = append(movieIdList, movieID)
+			response, err := http.Get(fmt.Sprintf("http://150.165.15.91:8001/movies/%s", movieID))
+			if err != nil {
+				fmt.Print(err.Error())
+				os.Exit(1)
+			}
+			responseData, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer response.Body.Close()
+
+			var movie Movie
+			err = json.Unmarshal(responseData, &movie)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println(string(responseData))
+			totalScore += movie.Score
+			totalVotes += movie.Votes
+
 		}
+
+		fmt.Println("Total Score: ", totalScore)
+		fmt.Println("Total Votes: ", totalVotes)
 	}
 
-	for _, movieID := range movieIdList {
-		response, err := http.Get(fmt.Sprintf("http://150.165.15.91:8001/movies/%s", movieID))
-		if err != nil {
-			fmt.Print(err.Error())
-			os.Exit(1)
-		}
-
-		responseData, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer response.Body.Close()
-
-		fmt.Println(string(responseData))
-	}
 }
