@@ -55,10 +55,9 @@ func main() {
 		idList = append(idList, id)
 	}
 
-	var totalScore float32 = 0
-	var totalVotes int = 0
-
 	for _, id := range idList {
+		var totalScore float32 = 0
+		var totalVotes int = 0
 		response, err := http.Get(fmt.Sprintf("http://150.165.15.91:8001/actors/%s", id))
 		if err != nil {
 			fmt.Print(err.Error())
