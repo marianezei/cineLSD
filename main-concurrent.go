@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -123,31 +124,45 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 	actorScores := make(map[string]float32)
 	actorMovieCount := make(map[string]int)
 
-	for _, actorID := range actorIDs {
-		actor, err := getActor(actorID)
-		if err != nil {
-			log.Printf("Falha ao obter informações do ator %s: %v", actorID, err)
-			continue
-		}
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
 
-		var totalScore float32
-		for _, movieID := range actor.Movies {
-			movie, err := getMovie(strings.ReplaceAll(movieID, `"`, ""))
+	for _, actorID := range actorIDs {
+		wg.Add(1)
+		go func(actorID string) {
+			defer wg.Done()
+			actor, err := getActor(actorID)
 			if err != nil {
-				log.Printf("Falha ao obter informações do filme %s: %v", movieID, err)
-				continue
+				log.Printf("Falha ao obter informações do ator %s: %v", actorID, err)
 			}
 
-			totalScore += movie.Score
-			actorMovieCount[actor.Name]++
-		}
+			var totalScore float32
+			for _, movieID := range actor.Movies {
+				movie, err := getMovie(strings.ReplaceAll(movieID, `"`, ""))
+				if err != nil {
+					log.Printf("Falha ao obter informações do filme %s: %v", movieID, err)
+					continue
+				}
 
-		if actorMovieCount[actor.Name] > 0 {
-			actorScores[actor.Name] = totalScore / float32(actorMovieCount[actor.Name])
-		} else {
-			actorScores[actor.Name] = 0
-		}
+				totalScore += movie.Score
+
+				mutex.Lock()
+				actorMovieCount[actor.Name]++
+				mutex.Unlock()
+			}
+
+			mutex.Lock()
+			if actorMovieCount[actor.Name] > 0 {
+				actorScores[actor.Name] = totalScore / float32(actorMovieCount[actor.Name])
+			} else {
+				actorScores[actor.Name] = 0
+			}
+			mutex.Unlock()
+
+		}(actorID)
 	}
+
+	wg.Wait()
 
 	return actorScores, nil
 }
