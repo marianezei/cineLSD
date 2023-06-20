@@ -124,7 +124,7 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 	actorScores := make(map[string]float32)
 	actorMovieCount := make(map[string]int)
 
-	const numWorkers = 100
+	const numWorkers = 16
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 
