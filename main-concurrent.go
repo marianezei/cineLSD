@@ -124,16 +124,21 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 	actorScores := make(map[string]float32)
 	actorMovieCount := make(map[string]int)
 
+	const numWorkers = 100
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 
-	for _, actorID := range actorIDs {
-		wg.Add(1)
-		go func(actorID string) {
-			defer wg.Done()
+	actorCh := make(chan string)
+	resultCh := make(chan struct{}) // Channel to signal completion
+
+	worker := func() {
+		defer wg.Done()
+
+		for actorID := range actorCh {
 			actor, err := getActor(actorID)
 			if err != nil {
 				log.Printf("Falha ao obter informações do ator %s: %v", actorID, err)
+				continue
 			}
 
 			var totalScore float32
@@ -158,11 +163,29 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 				actorScores[actor.Name] = 0
 			}
 			mutex.Unlock()
+		}
 
-		}(actorID)
+		resultCh <- struct{}{}
 	}
 
-	wg.Wait()
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go worker()
+	}
+
+	for _, actorID := range actorIDs {
+		actorCh <- actorID
+	}
+	close(actorCh)
+
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	for range resultCh {
+		// Do nothing, just wait until all workers have completed
+	}
 
 	return actorScores, nil
 }
