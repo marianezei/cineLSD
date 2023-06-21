@@ -17,11 +17,11 @@ Na função **calculateActorScores** nós definimos:
 2. Uma variável do tipo sync.waitGroup
 3. Uma variável do tipo sync.Mutex
 
-1. Na nossa primeira implementação da versão concorrente sequer existia a ideia de workerPool. Uma [goroutine](https://go.dev/tour/concurrency/1) era criada para cada ator do arquivo [actors.txt](./actors.txt), o que se mostrou problemático, visto que o tamanho do arquivo original era muito grande e o grande número de threads poderia prejudicar a performance do sistema. Então, passamos a fazer uso de uma workerPool e definimos o seu valor por meio de testes manuais, 16 goroutines/threads se comportou como um número ideal, acima desse valor pouco ganhamos em performance. 
+- Na nossa primeira implementação da versão concorrente sequer existia a ideia de workerPool. Uma [goroutine](https://go.dev/tour/concurrency/1) era criada para cada ator do arquivo [actors.txt](./actors.txt), o que se mostrou problemático, visto que o tamanho do arquivo original era muito grande e o grande número de threads poderia prejudicar a performance do sistema. Então, passamos a fazer uso de uma workerPool e definimos o seu valor por meio de testes manuais, 16 goroutines/threads se comportou como um número ideal, acima desse valor pouco ganhamos em performance. 
 
-2. O [waitGroup](https://go.dev/src/sync/waitgroup.go) foi utilizado para garantir que TODAS as goroutines terminaram de executar antes de retornar o resultado.
+- O [waitGroup](https://go.dev/src/sync/waitgroup.go) foi utilizado para garantir que TODAS as goroutines terminaram de executar antes de retornar o resultado.
 
-3. Por fim, usamos [Mutex](https://go.dev/tour/concurrency/9) para garantir a segurança das variáveis compartilhadas, evitando condições de corrida. 
+- Por fim, usamos [Mutex](https://go.dev/tour/concurrency/9) para garantir a segurança das variáveis compartilhadas, evitando condições de corrida. 
 
 Abaixo, a parte concorrente do código comentada:
 
