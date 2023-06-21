@@ -129,7 +129,6 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 	var mutex sync.Mutex
 
 	actorCh := make(chan string)
-	resultCh := make(chan struct{}) // Channel to signal completion
 
 	worker := func() {
 		defer wg.Done()
@@ -164,8 +163,6 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 			}
 			mutex.Unlock()
 		}
-
-		resultCh <- struct{}{}
 	}
 
 	for i := 0; i < numWorkers; i++ {
@@ -178,14 +175,7 @@ func calculateActorScores(actorIDs []string) (map[string]float32, error) {
 	}
 	close(actorCh)
 
-	go func() {
-		wg.Wait()
-		close(resultCh)
-	}()
-
-	for range resultCh {
-		// Do nothing, just wait until all workers have completed
-	}
+	wg.Wait()
 
 	return actorScores, nil
 }
