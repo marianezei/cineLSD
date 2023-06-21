@@ -5,9 +5,12 @@ echo "Executando o primeiro script...Versão sequencial - somente uma thread."
 chmod +x serial.sh
 ./serial.sh
 
+echo "------------------------"
+
 # Executa concurrent.sh
 echo "Executando o segundo script...Versão concorrente - várias threads."
 chmod +x concurrent.sh
 ./concurrent.sh
 
+echo "------------------------"
 echo "Finalizado!"
