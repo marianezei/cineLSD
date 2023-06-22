@@ -7,6 +7,13 @@ Neste laboratório, precisa-se escrever um programa que interage com serviço we
 
 Existem duas versões do programa. Uma totalmente sequencial (com somente uma thread) e outra concorrente. O objetivo é que a versão concorrente seja mais eficiente (retorna os top-10 atores em menos tempo que a versão sequencial).
 
+## Como rodar a aplicação
+
+chmod u+x build.sh
+./build.sh
+
+No arquivo build.sh estão os dois scripts que rodam a aplicação implementadas nas duas maneiras. 
+
 ## Estratégia (Versão Concorrente)
 
 A versão concorrente foi criada a partir da versão sequencial do nosso código, com uma mudança: o código foi dividido em funções, facilitando a implementação do paralelismo.
