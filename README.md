@@ -10,6 +10,7 @@ Existem duas versões do programa. Uma totalmente sequencial (com somente uma th
 ## Como rodar a aplicação
 
 chmod u+x build.sh
+
 ./build.sh
 
 No arquivo build.sh estão os dois scripts que rodam a aplicação implementadas nas duas maneiras. 
